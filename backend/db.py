@@ -2,37 +2,68 @@ from dotenv import load_dotenv
 import os
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import random
 
 class User:
     #User class constructor
     def __init__(self, name, email):
+        self.userid = generate_unique_userid()
         self.name = name
         self.email = email
+        self.isSubscribed = False
+
     
-    #returns True if success, False if email already found in DB
+    #saves the user to DB
+    #
     def save(self):
         duplicate = userCollection.find_one({
             'email': self.email.lower()
         })
         if (duplicate is None):
             userCollection.insert_one({
+                'userid': self.userid,
                 'name': self.name.lower(),
-                'email': self.email
+                'email': self.email,
+                'isSubscribed': self.isSubscribed
             })
-            return 'register'
+            newUser = userCollection.find_one({
+                'email': self.email.lower()
+            })
+            return 'register', {key: value for key, value in newUser.items() if key != '_id'}
         else:
-            if (duplicate['name'] == self.name):
-                return 'login'
+            if (duplicate['name'] == self.name.lower()):
+                return 'login', {key: value for key, value in duplicate.items() if key != '_id'}
             else:
-                return 'name-mismatch'
+                return 'name-mismatch', None
     
-    #Gets the 
-    def get_user_by_email(self):
-        user = userCollection.find_one({
-            'email': self.email.lower()
-        })
-        filteredUser = {key: value for key, value in user.items() if key != '_id'}
-        return filteredUser
+    #Gets the user by email
+def get_user_by_id(userid):
+    print(f'userid: {userid}')
+    user = userCollection.find_one({
+        'userid': int(userid)
+    })
+    print(f'user found: {user}')
+    if (user == None):
+        print('user could not be found')
+        return None
+
+    filteredUser = {key: value for key, value in user.items() if key != '_id'}
+    return filteredUser
+
+def subscribe_user(userid):
+    user = userCollection.update_one(
+        {'userid': int(userid)},
+        {'$set': {'isSubscribed': True}}
+    )
+    print(f'user found when subscring: {user}')
+    return {'success': 'user Successfully subscribed!'}
+
+def unsubscribe_user(userid):
+    user = userCollection.update_one(
+        {'userid': userid},
+        {'$set': {'isSubscribed': False}}
+    )
+
 
 class Product:
     def __init__(self, title, price, SKU, imgSrc):
@@ -45,6 +76,7 @@ class Product:
         duplicate = productCollection.find_one({
             'SKU': self.SKU
         })
+        #if there is no duplicate, add to DB
         if (duplicate is None):
             productCollection.insert_one({
                 'title': self.title,
@@ -52,7 +84,15 @@ class Product:
                 'SKU': self.SKU,
                 'imgSrc': self.imgSrc
             })
+            return
+        #if product already in DB, set newPrice field
+        if (float(self.price[1:].replace(',','')) != float(duplicate.get('price')[1:].replace(',',''))):
+            productCollection.update_one(
+                {'_id': duplicate.get('_id', 'old price not found')},
+                {"$set": {"newPrice": self.price, "price": self.price}}
+            )
 
+#returns a list of the products DB
 def get_products():
     allProducts = list(productCollection.find())
     filteredProducts = []
@@ -61,6 +101,13 @@ def get_products():
         filteredProducts.append(filteredProduct)
 
     return filteredProducts
+
+def generate_unique_userid():
+    while True:
+        candidate_id = random.randint(1000, 9999)
+        # Check if this ID already exists
+        if not userCollection.find_one({"userid": candidate_id}):
+            return candidate_id
 
 load_dotenv('../secrets.env')
 uri = os.getenv("CONNECTION_STRING")

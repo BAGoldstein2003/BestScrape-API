@@ -8,7 +8,7 @@ import time
 from urllib.parse import urlencode
 from db import *
 
-def newslow_scroll_to_bottom(driver, pause_time=1, scroll_step=500, max_tries=5):
+def slow_scroll_to_bottom(driver, pause_time=1, scroll_step=500, max_tries=5):
 
     last_height = driver.execute_script("return document.body.scrollHeight")
     tries = 0
@@ -36,7 +36,7 @@ def scrape_products(searchItem):
     driver.maximize_window()
     driver.get(url)
     time.sleep(1)
-    newslow_scroll_to_bottom(driver, pause_time=.4, scroll_step=300, max_tries=3)
+    slow_scroll_to_bottom(driver, pause_time=.4, scroll_step=300, max_tries=3)
     products = driver.find_elements(By.CLASS_NAME, 'product-list-item')
     productList = []
     
@@ -73,8 +73,7 @@ def scrape_products(searchItem):
     for product in productList:
         productObj = Product(product['productTitle'], product['productPrice'], product['productSKU'], product['productImageSrc'])
         productObj.save()
+        print(f'{productObj.title} saved to DB!')
     print(productList)
     print(f'{len(productList)} products scraped')
     return productList
-
-scrape_products('calculators')
