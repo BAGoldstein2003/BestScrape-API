@@ -1,8 +1,26 @@
 from dotenv import load_dotenv
 import os
+from datetime import date
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import random
+
+def connectToDB():
+    load_dotenv('../secrets.env')
+    uri = os.getenv("CONNECTION_STRING")
+
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    try:
+        client.admin.command('ping')
+        print("Successfully connected to DB")
+    except Exception as e:
+        print(e)
+
+    db = client.get_database('BestScrape')
+    userCollection = db.get_collection('users')
+    productCollection = db.get_collection('products')
+
+    return userCollection, productCollection
 
 class User:
     #User class constructor
@@ -66,13 +84,15 @@ def unsubscribe_user(userid):
 
 
 class Product:
-    def __init__(self, title, price, SKU, imgSrc):
+    def __init__(self, title, category, price, SKU, imgSrc):
         self.title = title
+        self.category = category
         self.price = price
         self.SKU = SKU
         self.imgSrc = imgSrc
     
     def save(self):
+        todaysDate = date.today().strftime("%m-%d")
         duplicate = productCollection.find_one({
             'SKU': self.SKU
         })
@@ -80,17 +100,29 @@ class Product:
         if (duplicate is None):
             productCollection.insert_one({
                 'title': self.title,
-                'price': self.price,
+                'category': self.category,
+                'price': float(self.price),
+                'price_history': [f'{todaysDate}={self.price}'],
                 'SKU': self.SKU,
                 'imgSrc': self.imgSrc
             })
-            return
-        #if product already in DB, set newPrice field
-        if (float(self.price[1:].replace(',','')) != float(duplicate.get('price')[1:].replace(',',''))):
-            productCollection.update_one(
-                {'_id': duplicate.get('_id', 'old price not found')},
-                {"$set": {"newPrice": self.price, "price": self.price}}
-            )
+        else:
+        #if product already in DB, set price field and add a new price-history node at head
+            if ((self.price != duplicate.get('price'))):
+                productCollection.update_one(
+                    {'_id': duplicate.get('_id', 'old price not found')},
+                    {"$set": {"price": self.price}}
+                )
+                productCollection.update_one(
+                    {'SKU': self.SKU},
+                    {
+                        "$push": {
+                            "price_history": {
+                                "$each": [f'{todaysDate}={self.price}']
+                            }
+                        }
+                    }
+                )
 
 #returns a list of the products DB
 def get_products():
@@ -123,3 +155,7 @@ db = client.get_database('BestScrape')
 userCollection = db.get_collection('users')
 productCollection = db.get_collection('products')
 
+productCollection.update_many(
+    {},  # Empty filter to match all documents
+    {"$rename": {"price-history": "price_history"}}  # Rename operation
+)

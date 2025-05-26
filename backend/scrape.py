@@ -31,6 +31,7 @@ def slow_scroll_to_bottom(driver, pause_time=1, scroll_step=500, max_tries=5):
 def scrape_products(searchItem):
     query = urlencode({"st": searchItem})
     options = Options()
+    options.add_argument('--disable-gpu')
     url = f"https://www.bestbuy.com/site/searchpage.jsp?{query}"
     driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
     driver.maximize_window()
@@ -45,7 +46,11 @@ def scrape_products(searchItem):
         try:
             #try to grab title and price
             productTitle = product.find_element(By.TAG_NAME, 'h2').text
+            print(f'productTitle: {productTitle}')
             productPrice = product.find_element(By.CLASS_NAME, 'customer-price').text
+            #type cast product price to float, removing '$' beforehand
+            productPrice = float(productPrice[1:].replace(',' , ''))
+            print(f'productPrice: {productPrice}')
             productImageSrc = product.find_element(By.TAG_NAME, 'img').get_attribute('src')
             
             #try to grab SKU
@@ -61,17 +66,18 @@ def scrape_products(searchItem):
                     'productTitle': productTitle,
                     'productPrice': productPrice,
                     'productSKU': productSKU,
-                    'productImageSrc': productImageSrc
+                    'productImageSrc': productImageSrc,
+                    'productCategory': searchItem
                 }
             )
-        except:
-            print(f"Product {idx} has no h2 tag")
+        except Exception as e:
+                print(f"Error: {e}")
         
     driver.close()
 
     #add products to DB
     for product in productList:
-        productObj = Product(product['productTitle'], product['productPrice'], product['productSKU'], product['productImageSrc'])
+        productObj = Product(product['productTitle'], product['productCategory'], product['productPrice'], product['productSKU'], product['productImageSrc'])
         productObj.save()
         print(f'{productObj.title} saved to DB!')
     print(productList)
