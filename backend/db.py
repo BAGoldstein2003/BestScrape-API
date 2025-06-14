@@ -8,11 +8,11 @@ import certifi
 def connectToDB():
 
     client = MongoClient(
-        os.environ["MONGODB_URI"],
+        os.environ["CONNECTION_STRING"],
         tls=True,
         tlsCAFile=certifi.where(),
     )
-    
+
     try:
         client.admin.command('ping')
         print("Successfully connected to DB")
