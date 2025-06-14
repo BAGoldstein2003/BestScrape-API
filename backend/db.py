@@ -54,14 +54,16 @@ class User:
             else:
                 return 'name-mismatch', None
     
-    #Gets the user by email
+
+#Gets the user by ID
 def get_user_by_id(userid):
     print(f'userid: {userid}')
     user = userCollection.find_one({
         'userid': int(userid)
     })
-    print(f'user found: {user}')
-    if (user == None):
+    if (user):
+        print(f'user found: {user}')
+    else:
         print('user could not be found')
         return None
 

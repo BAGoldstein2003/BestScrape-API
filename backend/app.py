@@ -15,14 +15,14 @@ def handle_register():
     user = request.json
     print(user)
     newUser = User(user['name'], user['email'])
-    code = newUser.save()
-    myUser = newUser.get_user_by_email()
+    code, user = newUser.save()
+    print(code)
     if (code == 'name-mismatch'):
         return jsonify({"error": "email was found, name did not match"})
     elif (code == 'login'):
-        return jsonify({"login": "User Successfully Logged-in", "User": myUser})
+        return jsonify({"login": "User Successfully Logged-in", "User": user})
     else:
-        return jsonify({"register": "User Successfully Registered", "User": myUser})
+        return jsonify({"register": "User Successfully Registered", "User": user})
 
 
 @app.route('/scrape', methods=['GET'])
@@ -35,7 +35,6 @@ def handle_scrape():
 @app.route('/products', methods=['GET'])
 def get_product_list():
     products = get_products()
-    print(products[0])
     return jsonify(products)
 
 if __name__ == '__main__':
