@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os
 from datetime import date
 from pymongo.mongo_client import MongoClient
