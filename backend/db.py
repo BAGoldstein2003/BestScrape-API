@@ -108,21 +108,39 @@ class Product:
             })
         else:
         #if product already in DB, set price field and add a new price-history node at head
-            if ((self.price != duplicate.get('price'))):
+            if ((self.price > duplicate.get('price'))):
                 productCollection.update_one(
                     {'_id': duplicate.get('_id', 'old price not found')},
-                    {"$set": {"price": self.price}}
+                    {"$set": {'price': self.price, 'direction': 'increase'}}
                 )
                 productCollection.update_one(
                     {'SKU': self.SKU},
                     {
                         "$push": {
                             "price_history": {
-                                "$each": [f'{todaysDate}={self.price}']
+                                "$each": [f'{todaysDate}={self.price}'],
+                                "$position": 0
                             }
                         }
                     }
                 )
+            elif ((self.price < duplicate.get('price'))):
+                productCollection.update_one(
+                    {'_id': duplicate.get('_id', 'old price not found')},
+                    {"$set": {'price': self.price, 'direction': 'decrease'}}
+                )
+                productCollection.update_one(
+                    {'SKU': self.SKU},
+                    {
+                        "$push": {
+                            "price_history": {
+                                "$each": [f'{todaysDate}={self.price}'],
+                                "$position": 0
+                            }
+                        }
+                    }
+                )
+
 
 #returns a list of the products DB
 def get_products():
@@ -131,7 +149,6 @@ def get_products():
     for product in allProducts:
         filteredProduct = {key: value for key, value in product.items() if key != '_id'}
         filteredProducts.append(filteredProduct)
-
     return filteredProducts
 
 def generate_unique_userid():
@@ -141,21 +158,6 @@ def generate_unique_userid():
         if not userCollection.find_one({"userid": candidate_id}):
             return candidate_id
 
-load_dotenv('../secrets.env')
-uri = os.getenv("CONNECTION_STRING")
 
-client = MongoClient(uri, server_api=ServerApi('1'))
-try:
-    client.admin.command('ping')
-    print("Successfully connected to DB")
-except Exception as e:
-    print(e)
+userCollection, productCollection = connectToDB()
 
-db = client.get_database('BestScrape')
-userCollection = db.get_collection('users')
-productCollection = db.get_collection('products')
-
-productCollection.update_many(
-    {},  # Empty filter to match all documents
-    {"$rename": {"price-history": "price_history"}}  # Rename operation
-)

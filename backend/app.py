@@ -47,9 +47,9 @@ def handle_subscribe():
 @app.route('/scrape', methods=['GET'])
 def handle_scrape():
     query = request.args.get('query')
-    userid = request.args.get('userid')
+    #userid = request.args.get('userid')
     if (query != '' or query != None):
-        return jsonify(scrape_products(query, userid))
+        return jsonify(scrape_products(query))
 
 @app.route('/products', methods=['GET'])
 def get_product_list():
@@ -58,4 +58,4 @@ def get_product_list():
 
 
 if __name__ == '__main__':
-   app.run(debug=True)
+   app.run(debug=False)
