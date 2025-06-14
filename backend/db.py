@@ -6,10 +6,8 @@ from pymongo.server_api import ServerApi
 import random
 
 def connectToDB():
-    load_dotenv('../secrets.env')
-    uri = os.getenv("CONNECTION_STRING")
 
-    client = MongoClient(uri, server_api=ServerApi('1'))
+    client = MongoClient(os.environ["CONNECTION_STRING"], server_api=ServerApi('1'))
     try:
         client.admin.command('ping')
         print("Successfully connected to DB")
