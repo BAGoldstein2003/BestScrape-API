@@ -3,10 +3,16 @@ from datetime import date
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import random
+import certifi
 
 def connectToDB():
 
-    client = MongoClient(os.environ["CONNECTION_STRING"], server_api=ServerApi('1'))
+    client = MongoClient(
+        os.environ["MONGODB_URI"],
+        tls=True,
+        tlsCAFile=certifi.where(),
+    )
+    
     try:
         client.admin.command('ping')
         print("Successfully connected to DB")
