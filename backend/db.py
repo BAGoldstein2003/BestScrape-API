@@ -3,15 +3,11 @@ from datetime import date
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import random
-import certifi
 
 def connectToDB():
 
-    client = MongoClient(
-        os.environ["CONNECTION_STRING"],
-        tls=True,
-        tlsCAFile=certifi.where(),
-    )
+    uri = os.environ["CONNECTION_STRING"]
+    client = MongoClient(uri)
 
     try:
         client.admin.command('ping')
