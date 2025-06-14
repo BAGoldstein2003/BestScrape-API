@@ -4,6 +4,7 @@ import sqlite3
 from db import *
 import random as rnd
 from scrape import *
+
 #app config
 app = Flask(__name__)
 CORS(app)

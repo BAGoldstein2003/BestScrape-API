@@ -9,7 +9,6 @@ from urllib.parse import urlencode
 from db import *
 
 def newslow_scroll_to_bottom(driver, pause_time=1, scroll_step=500, max_tries=5):
-
     last_height = driver.execute_script("return document.body.scrollHeight")
     tries = 0
 
@@ -76,5 +75,3 @@ def scrape_products(searchItem):
     print(productList)
     print(f'{len(productList)} products scraped')
     return productList
-
-scrape_products('calculators')
