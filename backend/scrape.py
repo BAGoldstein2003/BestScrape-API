@@ -41,7 +41,7 @@ def scrape_products(searchItem):
     #grab products on the page
     for idx, product in enumerate(products):
         try:
-            #try to grab title and price
+            #try to grab title, price, and Image Source
             productTitle = product.find_element(By.TAG_NAME, 'h2').text
             productPrice = product.find_element(By.CLASS_NAME, 'customer-price').text
             productImageSrc = product.find_element(By.TAG_NAME, 'img').get_attribute('src')
@@ -53,24 +53,28 @@ def scrape_products(searchItem):
                 if "SKU:" in text:
                     productSKU = text.split('SKU: ')[1]
                     break
-
+            
+            #append findings to product list
             productList.append(
                 {
                     'productTitle': productTitle,
+                    'productCategory': searchItem,
                     'productPrice': productPrice,
                     'productSKU': productSKU,
                     'productImageSrc': productImageSrc
                 }
             )
         except:
-            print(f"Product {idx} has no h2 tag")
+            print(f"Product {idx} was unable to be scraped")
         
     driver.close()
 
     #add products to DB
     for product in productList:
-        productObj = Product(product['productTitle'], product['productPrice'], product['productSKU'], product['productImageSrc'])
+        productObj = (Product(product['productTitle'], product['productCategory'], 
+                        float(product['productPrice'].replace(',', '')[1:]), 
+                        product['productSKU'], product['productImageSrc'])
+                     )
         productObj.save()
-    print(productList)
     print(f'{len(productList)} products scraped')
     return productList

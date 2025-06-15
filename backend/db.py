@@ -57,16 +57,12 @@ class User:
 
 #Gets the user by ID
 def get_user_by_id(userid):
-    print(f'userid: {userid}')
-    user = userCollection.find_one({
-        'userid': int(userid)
-    })
-    if (user):
-        print(f'user found: {user}')
-    else:
+    user = userCollection.find_one(
+        {'userid': int(userid)}
+    )
+    if (user is None):
         print('user could not be found')
         return None
-
     filteredUser = {key: value for key, value in user.items() if key != '_id'}
     return filteredUser
 
