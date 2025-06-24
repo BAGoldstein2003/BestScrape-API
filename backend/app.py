@@ -34,7 +34,11 @@ def handle_scrape():
 
 @app.route('/products', methods=['GET'])
 def get_product_list():
-    products = get_products()
+    pageNum = int(request.args.get('pageNum'))
+    itemsPerPage = int(request.args.get('itemsPerPage'))
+    startIdx = (pageNum - 1) * itemsPerPage
+    endIdx = startIdx + itemsPerPage
+    products = sorted(get_products(), key=lambda x: x['title'])[startIdx:endIdx]
     return jsonify(products)
 
 if __name__ == '__main__':
