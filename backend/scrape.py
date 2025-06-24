@@ -3,27 +3,22 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 import time
 from urllib.parse import urlencode
 from db import *
 
-def newslow_scroll_to_bottom(driver, pause_time=1, scroll_step=500, max_tries=5):
+def iterative_scroll_until_min_items(driver, min_items=12, scroll_step=500, pause_time=0.5, timeout=10):
     last_height = driver.execute_script("return document.body.scrollHeight")
-    tries = 0
-
     while True:
         driver.execute_script(f"window.scrollBy(0, {scroll_step});")
         time.sleep(pause_time)
-
         new_height = driver.execute_script("return document.body.scrollHeight")
-
-        if new_height == last_height:
-            tries += 1
-            if tries >= max_tries:
-                break  # No more content after several tries
-        else:
-            tries = 0  # Reset if new content was loaded
-
+        items = driver.find_elements(By.CLASS_NAME, 'product-list-item')
+        productNames = driver.find_elements(By.TAG_NAME, 'h2')
+        print(len(productNames))
+        if new_height == last_height and len(productNames) >= min_items:
+            break
         last_height = new_height
 
 def scrape_products(searchItem):
@@ -34,7 +29,7 @@ def scrape_products(searchItem):
     driver.maximize_window()
     driver.get(url)
     time.sleep(1)
-    newslow_scroll_to_bottom(driver, pause_time=.4, scroll_step=300, max_tries=3)
+    iterative_scroll_until_min_items(driver)
     products = driver.find_elements(By.CLASS_NAME, 'product-list-item')
     productList = []
     

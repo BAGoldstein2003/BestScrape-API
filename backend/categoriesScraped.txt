@@ -1,12 +1,12 @@
-Sunglasses
 TVs
-cellphone
-watches
-cases
-appliances
+Cellphone
+Watches
+Cases
+Appliances
 GPUs
 CPUs
 RAM
 Motherboards
 Cables
 Monitors
+Sunglasses
